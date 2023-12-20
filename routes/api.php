@@ -30,3 +30,4 @@ Route::get('/soft-deleted-users', [UserController::class, 'listSoftDeletedUsers'
 Route::delete('/users/{id}', [UserController::class, 'softDeleteUser']);
 Route::put('/users/{id}/restore', [UserController::class, 'restoreUser']);
 
+

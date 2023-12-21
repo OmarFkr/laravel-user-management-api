@@ -11,6 +11,7 @@ const CreateUser = () => {
   const [showUserList, setShowUserList] = useState(false);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [updateUserId, setUpdateUserId] = useState(null);
 
   useEffect(() => {
     // Fetch the list of users when the component mounts
@@ -54,44 +55,64 @@ const CreateUser = () => {
 
     setLoading(true);
 
-    // TODO: Perform validation if needed
-
-    fetch('/api/users', {
+    if (updateUserId) {
+      // If updateUserId is set, perform update instead of create
+      fetch(`/api/users/${updateUserId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+        .then(response => response.json())
+        .then(updatedUser => {
+          console.log('User updated:', updatedUser);
+          // Update the list of users after updating a user
+          fetchUsers();
+          // Reset form fields and updateUserId
+          setFormData({
+            name: '',
+            email: '',
+          });
+          setUpdateUserId(null);
+        })
+        .catch(error => {
+          console.error('Error updating user:', error);
+          // TODO: Handle error
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      // If updateUserId is not set, perform create
+      fetch('/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: JSON.stringify(formData),
-      })      
-      .then(response => {
-        const contentType = response.headers.get('content-type');
-        console.log('Content-Type:', contentType);
-
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Invalid content type. Expected JSON.');
-        }
-
-        return response.json();
       })
-      .then(data => {
-        console.log('New user created:', data);
-        // Update the list of users after creating a new user
-        fetchUsers();
-        // Reset form fields if needed
-        setFormData({
-          name: '',
-          email: '',
+        .then(response => response.json())
+        .then(data => {
+          console.log('New user created:', data);
+          // Update the list of users after creating a new user
+          fetchUsers();
+          // Reset form fields if needed
+          setFormData({
+            name: '',
+            email: '',
+          });
+        })
+        .catch(error => {
+          console.error('Error creating user:', error);
+          // TODO: Handle error
+        })
+        .finally(() => {
+          setLoading(false);
         });
-        // TODO: Handle success, reset form, or navigate to a new page
-      })
-      .catch(error => {
-        console.error('Error creating user:', error);
-        // TODO: Handle error
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    }
   };
 
   const onDeleteUser = userId => {
@@ -125,10 +146,19 @@ const CreateUser = () => {
       });
   };
 
+  const onUpdateUser = userId => {
+    // Set the user to be updated in the form
+    const userToUpdate = users.find(user => user.id === userId);
+    setFormData({
+      name: userToUpdate.name,
+      email: userToUpdate.email,
+    });
+    setUpdateUserId(userId);
+  };
 
   return (
     <div className="create-user-container">
-      <h1>Create User</h1>
+      <h1>Users Management</h1>
       <form onSubmit={handleSubmit}>
         <label>
           <span>Name:</span>
@@ -151,11 +181,22 @@ const CreateUser = () => {
           />
         </label>
         <button type="submit" disabled={loading}>
-          {loading ? 'Creating...' : 'Create User'}
+          {updateUserId ? 'Update User' : 'Create User'}
         </button>
+        {updateUserId && (
+          <button type="button" onClick={() => setUpdateUserId(null)}>
+            Cancel Update
+          </button>
+        )}
       </form>
 
-      {showUserList && <ListUsers users={users} onDeleteUser={onDeleteUser} />} {/* Pass the updated list of users and onDeleteUser to ListUsers */}
+      {showUserList && (
+        <ListUsers
+          users={users}
+          onDeleteUser={onDeleteUser}
+          onUpdateUser={onUpdateUser}
+        />
+      )}
     </div>
   );
 };

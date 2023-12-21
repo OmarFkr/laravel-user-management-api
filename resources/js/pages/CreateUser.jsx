@@ -13,6 +13,8 @@ const CreateUser = () => {
   const [loading, setLoading] = useState(false);
   const [updateUserId, setUpdateUserId] = useState(null);
 
+  const csrfToken = "{{ csrf_token() }}";
+
   useEffect(() => {
     // Fetch the list of users when the component mounts
     fetchUsers();
@@ -156,9 +158,40 @@ const CreateUser = () => {
     setUpdateUserId(userId);
   };
 
+  const handleLogout = () => {
+
+    const formData = new FormData();
+    formData.append('_token', csrfToken);
+
+    // Make a POST request to the /logout endpoint
+    fetch('/simple-logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken, // Replace with your actual CSRF token
+      },
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        window.location.href = '/login';
+      })
+      .catch(error => {
+        console.error('Error logging out:', error);
+        // TODO: Handle error
+      });
+  };
+  
   return (
     <div className="create-user-container">
       <h1>Users Management</h1>
+
+      <form onSubmit={handleLogout}>
+      <input type="hidden" name="_token" value={csrfToken} />
+      <button type="submit">Logout</button>
+      </form>
+      
       <form onSubmit={handleSubmit}>
         <label>
           <span>Name:</span>

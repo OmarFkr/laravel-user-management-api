@@ -43,4 +43,18 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function show()
+    {
+        return view('auth.register');
+    }
+
+    public function handle()
+    {
+        $user = User::create([
+            'name' => request('name'),
+            'email' => request('email'),
+            'password' => Hash::make(request('password'))
+        ]);
+    }
 }
